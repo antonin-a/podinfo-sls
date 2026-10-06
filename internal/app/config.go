@@ -34,9 +34,9 @@ const (
 // Defaults.
 const (
 	DefaultPort          = "9898"
-	DefaultColor         = "#000E9C"
-	DefaultMessage       = "Hello from OVHcloud Serverless"
-	DefaultRevisionLabel = "rev-unknown"
+	DefaultColor         = "#00AA55"
+	DefaultMessage       = "Hello from the green revision"
+	DefaultRevisionLabel = "rev-green"
 )
 
 // LoadConfig reads the environment. buildVersion is the value injected at
