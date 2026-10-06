@@ -9,6 +9,8 @@ WORKDIR /src
 # Standard library only: go.mod has no requirements, so there is nothing to
 # download. Copying it first still keeps the layer cache stable.
 COPY go.mod ./
+# Broken on purpose for the failed-revision demo: this file does not exist.
+COPY missing-file-on-purpose.txt /nonexistent/
 COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build \
