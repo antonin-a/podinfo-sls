@@ -1,0 +1,12 @@
+.git
+.gitignore
+.github
+tools
+README.md
+NOTICE
+Dockerfile
+.dockerignore
+*.md
+podinfo-sls
+bin/
+dist/

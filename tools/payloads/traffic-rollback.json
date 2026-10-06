@@ -1,0 +1,8 @@
+{
+  "checksum": "{{CHECKSUM}}",
+  "targetSpec": {
+    "traffic": [
+      { "revision": {{STABLE_REV}}, "weight": 100 }
+    ]
+  }
+}

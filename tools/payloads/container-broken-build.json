@@ -1,0 +1,36 @@
+{
+  "checksum": "{{CHECKSUM}}",
+  "targetSpec": {
+    "name": "{{NAME}}",
+    "template": {
+      "container": {
+        "source": {
+          "repository": {
+            "url": "{{REPO_URL}}",
+            "ref": "broken-dockerfile"
+          },
+          "dockerfilePath": "Dockerfile"
+        },
+        "port": 9898,
+        "env": [
+          { "name": "SLS_UI_MESSAGE", "value": "{{UI_MESSAGE}}" },
+          { "name": "SLS_REVISION_LABEL", "value": "rev-broken" }
+        ],
+        "protocols": ["HTTP", "SSE"],
+        "resources": { "cpu": 1, "memory": 512 },
+        "requestTimeoutSeconds": 60
+      }
+    },
+    "scaling": {
+      "mode": "AUTO",
+      "minInstances": 0,
+      "maxInstances": 10,
+      "concurrencyTarget": 80,
+      "idleTimeoutSeconds": 60
+    },
+    "traffic": [
+      { "revision": {{STABLE_REV}}, "weight": 100 }
+    ],
+    "rollbackErrorThreshold": 5
+  }
+}

@@ -1,0 +1,15 @@
+# build outputs
+/podinfo-sls
+/bin/
+/dist/
+*.test
+*.out
+
+# editors and OS
+.DS_Store
+.idea/
+.vscode/
+
+# demo tooling
+tools/env.sh
+tools/*.tmp.json

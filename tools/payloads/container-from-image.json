@@ -1,0 +1,30 @@
+{
+  "targetSpec": {
+    "name": "{{NAME}}",
+    "region": "{{REGION}}",
+    "template": {
+      "container": {
+        "image": "{{IMAGE}}",
+        "port": 9898,
+        "env": [
+          { "name": "SLS_UI_MESSAGE", "value": "{{UI_MESSAGE}}" },
+          { "name": "SLS_REVISION_LABEL", "value": "{{REVISION_LABEL}}" }
+        ],
+        "protocols": ["HTTP", "SSE"],
+        "resources": { "cpu": 1, "memory": 512 },
+        "requestTimeoutSeconds": 60
+      }
+    },
+    "scaling": {
+      "mode": "AUTO",
+      "minInstances": 0,
+      "maxInstances": 10,
+      "concurrencyTarget": 80,
+      "idleTimeoutSeconds": 60
+    },
+    "traffic": [
+      { "latest": true, "weight": 100 }
+    ],
+    "rollbackErrorThreshold": 5
+  }
+}

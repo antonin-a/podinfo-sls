@@ -1,0 +1,11 @@
+{
+  "targetSpec": {
+    "name": "tick",
+    "sourceType": "CRON",
+    "schedule": "*/5 * * * *",
+    "http": {
+      "method": "POST",
+      "path": "/events"
+    }
+  }
+}

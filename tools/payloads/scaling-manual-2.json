@@ -1,0 +1,9 @@
+{
+  "checksum": "{{CHECKSUM}}",
+  "targetSpec": {
+    "scaling": {
+      "mode": "MANUAL",
+      "manualInstances": 2
+    }
+  }
+}

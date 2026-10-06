@@ -1,0 +1,6 @@
+{
+  "method": "GET",
+  "path": "/api/info",
+  "headers": null,
+  "body": null
+}

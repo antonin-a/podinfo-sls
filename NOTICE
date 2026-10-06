@@ -1,0 +1,6 @@
+podinfo-sls
+Copyright 2026 Antonin Anchisi
+
+Inspired by podinfo (https://github.com/stefanprodan/podinfo),
+Copyright Stefan Prodan, licensed under the Apache License, Version 2.0.
+podinfo-sls is an independent rewrite and shares no source code with podinfo.

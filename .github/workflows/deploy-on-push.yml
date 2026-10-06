@@ -1,0 +1,111 @@
+# Deploy demo-podinfo-sls to OVHcloud Serverless on every push to main.
+#
+# DISABLED BY DEFAULT: the job only runs when the repository variable
+# SLS_DEPLOY_ENABLED is set to "true" (Settings > Variables > Actions).
+#
+# Required repository variables:
+#   OVH_CLOUD_PROJECT    Public Cloud project id
+#   SLS_REGION           optional, default EU-WEST-PAR
+#   SLS_API_PREFIX       optional, default /v2
+# Required repository secrets (OAuth2 service account):
+#   OVH_ENDPOINT         alpha gateway base URL
+#   OVH_CLIENT_ID
+#   OVH_CLIENT_SECRET
+# Alternative (AK/AS/CK): replace client_id / client_secret below with
+#   application_key / application_secret / consumer_key from secrets
+#   OVH_APPLICATION_KEY, OVH_APPLICATION_SECRET, OVH_CONSUMER_KEY.
+#
+# The revision is pinned to the exact commit (REF=$GITHUB_SHA), so the
+# platform builds what was just pushed, not whatever main points to later.
+name: deploy-on-push
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "tools/**"
+      - "**/*.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sls-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: vars.SLS_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OVH_CLOUD_PROJECT: ${{ vars.OVH_CLOUD_PROJECT }}
+      SLS_REGION: ${{ vars.SLS_REGION || 'EU-WEST-PAR' }}
+      SLS_API_PREFIX: ${{ vars.SLS_API_PREFIX || '/v2' }}
+      OVH_CONFIG_FILE: ${{ github.workspace }}/.ovh.conf
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install python-ovh and jq
+        run: |
+          pip install ovh
+          sudo apt-get update -qq && sudo apt-get install -y -qq jq
+
+      - name: Write ovh.conf
+        env:
+          OVH_ENDPOINT: ${{ secrets.OVH_ENDPOINT }}
+          OVH_CLIENT_ID: ${{ secrets.OVH_CLIENT_ID }}
+          OVH_CLIENT_SECRET: ${{ secrets.OVH_CLIENT_SECRET }}
+        run: |
+          umask 077
+          cat > "$OVH_CONFIG_FILE" <<CONF
+          [default]
+          endpoint=serverless-alpha
+
+          [serverless-alpha]
+          endpoint=${OVH_ENDPOINT}
+          client_id=${OVH_CLIENT_ID}
+          client_secret=${OVH_CLIENT_SECRET}
+          CONF
+          # AK/AS/CK alternative: replace the two client_* lines with
+          #   application_key=${OVH_APPLICATION_KEY}
+          #   application_secret=${OVH_APPLICATION_SECRET}
+          #   consumer_key=${OVH_CONSUMER_KEY}
+          test -s "$OVH_CONFIG_FILE"
+
+      - name: Check API access
+        run: tools/api.sh GET serverless/quota
+
+      - name: Deploy demo-podinfo-sls pinned to this commit
+        id: deploy
+        run: |
+          chmod +x tools/*.sh
+          tools/deploy.sh container demo-podinfo-sls tools/payloads/container-from-repo.json \
+            "REF=${GITHUB_SHA}" \
+            "UI_MESSAGE=Deployed by GitHub Actions run ${GITHUB_RUN_NUMBER}"
+
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "### OVHcloud Serverless deploy"
+            echo
+            echo "| field | value |"
+            echo "|---|---|"
+            echo "| container | demo-podinfo-sls |"
+            echo "| commit | \`${GITHUB_SHA}\` |"
+            echo "| url | ${{ steps.deploy.outputs.url || 'n/a' }} |"
+            echo "| latest revision | ${{ steps.deploy.outputs.revision || 'n/a' }} |"
+            echo "| elapsed | ${{ steps.deploy.outputs.elapsed || 'n/a' }} s |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove credentials
+        if: always()
+        run: rm -f "$OVH_CONFIG_FILE"

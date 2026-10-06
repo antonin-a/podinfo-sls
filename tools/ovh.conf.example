@@ -1,0 +1,26 @@
+; OVHcloud API credentials for the Serverless alpha demo.
+; Copy to ~/.ovh.conf (chmod 600) or point OVH_CONFIG_FILE at this file.
+; Both python-ovh (tools/api.py) and the ovhcloud CLI read this format.
+
+[default]
+; Name of the profile section used when none is given explicitly.
+endpoint=serverless-alpha
+
+[serverless-alpha]
+; Base URL of the alpha API gateway. Depending on the gateway, the /v2 path
+; prefix is either part of this URL or added per request by SLS_API_PREFIX
+; (see tools/env.example.sh). Default: SLS_API_PREFIX=/v2, so leave it out here.
+endpoint=<ALPHA_API_URL>
+
+; Option A: application key / application secret / consumer key
+application_key=<APPLICATION_KEY>
+application_secret=<APPLICATION_SECRET>
+consumer_key=<CONSUMER_KEY>
+
+; Option B: OAuth2 service account (comment option A, uncomment these two)
+;client_id=<CLIENT_ID>
+;client_secret=<CLIENT_SECRET>
+
+[ovh-cli]
+; Used by the ovhcloud CLI only; the bash scripts use OVH_CLOUD_PROJECT.
+default_cloud_project=<PROJECT_ID>

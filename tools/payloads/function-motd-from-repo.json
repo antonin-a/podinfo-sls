@@ -1,0 +1,36 @@
+{
+  "targetSpec": {
+    "name": "{{NAME}}",
+    "region": "{{REGION}}",
+    "template": {
+      "function": {
+        "runtime": "python3.12",
+        "entrypoint": "main",
+        "source": {
+          "sourceOrigin": "REPO",
+          "repository": {
+            "url": "{{REPO_URL}}",
+            "ref": "{{REF}}"
+          }
+        },
+        "env": [
+          { "name": "MOTD_THEME", "value": "{{MOTD_THEME}}" }
+        ],
+        "secrets": [
+          { "name": "AI_ENDPOINTS_TOKEN", "value": "{{AI_ENDPOINTS_TOKEN}}" }
+        ]
+      }
+    },
+    "scaling": {
+      "mode": "AUTO",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "concurrencyTarget": 10,
+      "idleTimeoutSeconds": 60
+    },
+    "traffic": [
+      { "latest": true, "weight": 100 }
+    ],
+    "rollbackErrorThreshold": 5
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "checksum": "{{CHECKSUM}}",
+  "targetSpec": {
+    "name": "{{NAME}}",
+    "template": {
+      "container": {
+        "source": {
+          "repository": {
+            "url": "{{REPO_URL}}",
+            "ref": "{{REF}}"
+          },
+          "dockerfilePath": "Dockerfile"
+        },
+        "port": 9898,
+        "env": [
+          { "name": "SLS_UI_MESSAGE", "value": "{{UI_MESSAGE}}" },
+          { "name": "SLS_REVISION_LABEL", "value": "{{REVISION_LABEL}}" }
+        ],
+        "protocols": ["HTTP", "SSE"],
+        "resources": { "cpu": 1, "memory": 512 },
+        "requestTimeoutSeconds": 60
+      }
+    },
+    "scaling": {
+      "mode": "AUTO",
+      "minInstances": 0,
+      "maxInstances": 10,
+      "concurrencyTarget": 80,
+      "idleTimeoutSeconds": 60
+    },
+    "traffic": [
+      { "revision": {{STABLE_REV}}, "weight": 90 },
+      { "latest": true, "weight": 10 }
+    ],
+    "rollbackErrorThreshold": 5
+  }
+}

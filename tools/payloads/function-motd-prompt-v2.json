@@ -1,0 +1,28 @@
+{
+  "checksum": "{{CHECKSUM}}",
+  "targetSpec": {
+    "name": "{{NAME}}",
+    "template": {
+      "function": {
+        "runtime": "python3.12",
+        "entrypoint": "main",
+        "source": {
+          "sourceOrigin": "REPO",
+          "repository": {
+            "url": "{{REPO_URL}}",
+            "ref": "prompt-v2"
+          }
+        },
+        "env": [
+          { "name": "MOTD_THEME", "value": "{{MOTD_THEME}}" }
+        ],
+        "secrets": [
+          { "name": "AI_ENDPOINTS_TOKEN", "value": "{{AI_ENDPOINTS_TOKEN}}" }
+        ]
+      }
+    },
+    "traffic": [
+      { "latest": true, "weight": 100 }
+    ]
+  }
+}

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {{if .Refresh}}<meta http-equiv="refresh" content="2">{{end}}
+  <title>podinfo-sls {{.RevisionLabel}}</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    :root { --band: {{.Color}}; --band-text: {{.TextColor}}; }
+  </style>
+</head>
+<body>
+  <header class="band">
+    <div class="wrap">
+      <div class="brand">
+        {{if .Logo}}<img class="logo" src="{{.Logo}}" alt="logo">{{else}}<span class="wordmark">podinfo-sls</span>{{end}}
+      </div>
+      <h1 class="message">{{.Message}}</h1>
+      <div class="chips">
+        <span class="chip">version <strong>{{.Version}}</strong></span>
+        <span class="chip">revision <strong>{{.RevisionLabel}}</strong></span>
+        <span class="chip">colour <strong>{{.Color}}</strong></span>
+        {{if .ColdStart}}<span class="chip cold">cold start</span>{{end}}
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="toolbar">
+      <button id="refresh-toggle" class="btn" type="button">
+        {{if .Refresh}}Stop auto-refresh{{else}}Auto-refresh every 2s{{end}}
+      </button>
+      <a class="btn ghost" href="/api/info">/api/info</a>
+      <a class="btn ghost" href="/api/env">/api/env</a>
+      <a class="btn ghost" href="/events">/events</a>
+    </div>
+
+    <section class="cards">
+      <article class="card">
+        <h2>Instance{{if .ColdStart}} <span class="badge">cold start</span>{{end}}</h2>
+        <dl>
+          <dt>hostname</dt><dd class="mono">{{.Hostname}}</dd>
+          <dt>instanceId</dt><dd class="mono big">{{.InstanceID}}</dd>
+          <dt>startedAt</dt><dd class="mono">{{.StartedAt}}</dd>
+          <dt>uptime</dt><dd>{{.UptimeHuman}}</dd>
+          <dt>requestsServed</dt><dd>{{.Requests}}</dd>
+        </dl>
+      </article>
+
+      <article class="card">
+        <h2>Runtime</h2>
+        <dl>
+          <dt>platform</dt><dd class="mono">{{.GOOS}}/{{.GOARCH}}</dd>
+          <dt>go</dt><dd class="mono">{{.GoVersion}}</dd>
+          <dt>NumCPU</dt><dd>{{.NumCPU}}</dd>
+          <dt>PORT</dt><dd class="mono">{{.Port}}</dd>
+          <dt>events</dt><dd>{{if .FailEvents}}<span class="warn">failing on purpose</span>{{else}}accepting{{end}}</dd>
+        </dl>
+      </article>
+    </section>
+
+    <section class="card endpoints">
+      <h2>Endpoints</h2>
+      <ul class="mono">
+        <li><code>GET /api/info</code> instance and revision metadata</li>
+        <li><code>GET /api/env</code> SLS_* variables, secrets masked</li>
+        <li><code>GET /healthz</code> <code>GET /readyz</code> <code>POST /readyz/disable|enable</code></li>
+        <li><code>GET /delay/{s}</code> <code>GET /status/{code}</code> <code>GET /panic</code></li>
+        <li><code>GET /burn/cpu?s=N</code> <code>GET /burn/mem?mb=N</code> <code>GET /burn/mem/release</code></li>
+        <li><code>GET /stream?s=N</code> Server-Sent Events</li>
+        <li><code>POST /events</code> CloudEvents receiver, <code>GET /events</code> last 20</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="wrap foot">
+    <span>podinfo-sls {{.Version}}, inspired by <a href="https://github.com/stefanprodan/podinfo">podinfo</a></span>
+    <span class="mono">{{.InstanceID}} on {{.Hostname}}</span>
+  </footer>
+
+  <script>
+    (function () {
+      var btn = document.getElementById('refresh-toggle');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        var url = new URL(window.location.href);
+        if (url.searchParams.get('refresh') === '1') {
+          url.searchParams.delete('refresh');
+        } else {
+          url.searchParams.set('refresh', '1');
+        }
+        window.location.replace(url.toString());
+      });
+    })();
+  </script>
+</body>
+</html>
