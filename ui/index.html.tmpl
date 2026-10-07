@@ -70,6 +70,11 @@
           <dt>of which platform + network</dt><dd class="mono" id="t-platform">-</dd>
           <dt>DNS + TLS connection</dt><dd class="mono" id="t-connect">-</dd>
         </dl>
+        <div class="estimate" id="t-estimate" hidden>
+          <div class="estimate-label">estimated platform cold start</div>
+          <div class="estimate-value" id="t-est-value">-</div>
+          <div class="estimate-sub" id="t-est-sub"></div>
+        </div>
         <div class="measure">
           <button id="t-run" class="btn" type="button">Measure 5 calls</button>
           <ol id="t-list" class="mono"></ol>
@@ -83,10 +88,17 @@
             <span class="val">{{if .Startup.DedicatedKernel}}{{with .Startup.KernelBootToProcessMs}}{{.}} ms{{end}}{{else}}<span class="muted">shared kernel, not measurable</span>{{end}}</span></li>
           <li><span class="step">process start to ready</span>
             <span class="val">{{with .Startup.ProcessToReadyMs}}{{.}} ms{{else}}-{{end}}</span></li>
+          {{if .Startup.StartedAheadOfTraffic}}
+          <li class="aside"><span class="step">started before any traffic: first request came later</span>
+            <span class="val muted">{{with .Startup.ReadyToFirstRequestMs}}{{.}} ms{{end}}</span></li>
+          {{else}}
           <li><span class="step">ready to first request</span>
             <span class="val">{{with .Startup.ReadyToFirstRequestMs}}{{.}} ms{{else}}-{{end}}</span></li>
+          {{end}}
+          <li class="total"><span class="step">cold start seen from inside the instance</span>
+            <span class="val">{{with .Startup.InstanceColdStartMs}}{{.}} ms{{else}}-{{end}}</span></li>
         </ol>
-        <p class="note">A cold start is everything the first visitor waits for: the platform wakes an instance, the instance boots and starts this process, then the request is served. The first line exists only when the instance runs its own kernel (micro-VM).</p>
+        <p class="note">{{if .Startup.StartedAheadOfTraffic}}This instance was started before any request was waiting (at deploy, or to keep capacity): the wait for the first visitor is idle time, not part of a cold start. {{end}}The platform's own figure, from wake to the application answering, is the cold start in the Metrics tab of the console (Serverless API metrics). The first line exists only when the instance runs its own kernel (micro-VM).</p>
       </article>
     </section>
 
@@ -146,6 +158,21 @@
         document.getElementById('t-headline').innerHTML = cold
           ? '<span class="cold-tag">cold start</span> this page woke the instance: you waited <strong>' + fmt(ttfb) + '</strong>'
           : 'warm instance: you waited <strong>' + fmt(ttfb) + '</strong>';
+        if (cold) estimate(ttfb);
+      }
+
+      // A cold page minus a warm call made right after: network and
+      // application time cancel out, what is left is the platform's wake.
+      function estimate(coldTtfb) {
+        var url = '/api/info?warm=' + Date.now();
+        fetch(url, { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function () {
+          var e = performance.getEntriesByName(new URL(url, location.href).href)[0];
+          if (!e || !e.responseStart) return;
+          var warm = e.responseStart - e.requestStart;
+          document.getElementById('t-estimate').hidden = false;
+          document.getElementById('t-est-value').textContent = fmt(Math.max(0, coldTtfb - warm));
+          document.getElementById('t-est-sub').textContent = 'this page (' + fmt(coldTtfb) + ') minus a warm call made right after (' + fmt(warm) + '): network and application cancel out';
+        }).catch(function () {});
       }
       if (document.readyState === 'complete') showNav(); else window.addEventListener('load', function () { setTimeout(showNav, 0); });
 

@@ -18,6 +18,12 @@ var processStart = time.Now()
 // says nothing about this instance. Nil when unreadable (not Linux).
 var kernelUptimeAtStart = readKernelUptime()
 
+// aheadOfTrafficThreshold: when the first request arrives later than this
+// after the instance became ready, the platform started the instance before
+// any request was waiting (at deploy, or to keep capacity), so that gap is
+// idle time and not part of a cold start.
+const aheadOfTrafficThreshold = 5 * time.Second
+
 // vmBootThreshold separates a dedicated, just-booted kernel from a long-lived
 // shared one.
 const vmBootThreshold = 120 * time.Second
@@ -60,6 +66,13 @@ type StartupInfo struct {
 	ProcessToReadyMs      *int64   `json:"processToReadyMs"`
 	ReadyToFirstRequestMs *int64   `json:"readyToFirstRequestMs"`
 	FirstRequestAt        string   `json:"firstRequestAt,omitempty"`
+	// StartedAheadOfTraffic is true when the first request came long after
+	// the instance was ready: the instance was not started for it.
+	StartedAheadOfTraffic bool `json:"startedAheadOfTraffic"`
+	// InstanceColdStartMs sums what the instance itself can see of a cold
+	// start: VM boot to process start, process start to ready, and ready to
+	// first request when that request is the one that woke the instance.
+	InstanceColdStartMs *int64 `json:"instanceColdStartMs"`
 }
 
 func ms(d time.Duration) *int64 { v := d.Milliseconds(); return &v }
@@ -82,8 +95,20 @@ func (a *App) startupInfo() StartupInfo {
 		t := time.Unix(0, first)
 		s.FirstRequestAt = t.UTC().Format(time.RFC3339Nano)
 		if ready != 0 {
-			s.ReadyToFirstRequestMs = ms(t.Sub(time.Unix(0, ready)))
+			gap := t.Sub(time.Unix(0, ready))
+			s.ReadyToFirstRequestMs = ms(gap)
+			s.StartedAheadOfTraffic = gap > aheadOfTrafficThreshold
 		}
+	}
+	if s.ProcessToReadyMs != nil {
+		total := *s.ProcessToReadyMs
+		if s.KernelBootToProcessMs != nil {
+			total += *s.KernelBootToProcessMs
+		}
+		if s.ReadyToFirstRequestMs != nil && !s.StartedAheadOfTraffic {
+			total += *s.ReadyToFirstRequestMs
+		}
+		s.InstanceColdStartMs = &total
 	}
 	return s
 }

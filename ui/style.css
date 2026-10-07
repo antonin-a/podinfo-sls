@@ -194,3 +194,12 @@ dd.big { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
 .timeline .val { font-weight: 700; white-space: nowrap; }
 .note { font-size: 0.8rem; color: var(--muted); margin: 12px 0 0; line-height: 1.4; }
 .muted { color: var(--muted); }
+
+/* Cold start estimate and startup total */
+.estimate { margin-top: 14px; background: #FFF6D6; border: 1px solid #F2D27A; border-radius: 10px; padding: 10px 12px; }
+.estimate-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: #5A4300; }
+.estimate-value { font-size: 1.6rem; font-weight: 800; color: #5A4300; }
+.estimate-sub { font-size: 0.78rem; color: #6B5A1E; line-height: 1.35; }
+.timeline li.aside .step { font-style: italic; }
+.timeline li.total { border-bottom: none; border-top: 2px solid var(--primary); margin-top: 4px; }
+.timeline li.total .step { color: var(--primary); font-weight: 700; }
