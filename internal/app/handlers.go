@@ -55,6 +55,7 @@ type pageData struct {
 	Port          string
 	Refresh       bool
 	FailEvents    bool
+	Startup       StartupInfo
 }
 
 func (a *App) handleIndex(w http.ResponseWriter, r *http.Request) {
@@ -78,6 +79,7 @@ func (a *App) handleIndex(w http.ResponseWriter, r *http.Request) {
 		Port:          a.cfg.Port,
 		Refresh:       r.URL.Query().Get("refresh") == "1",
 		FailEvents:    a.cfg.FailEvents,
+		Startup:       a.startupInfo(),
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
@@ -141,21 +143,22 @@ func contrastColor(hexColor string) string {
 // ---- API -----------------------------------------------------------------
 
 type infoResponse struct {
-	Hostname       string `json:"hostname"`
-	InstanceID     string `json:"instanceId"`
-	Version        string `json:"version"`
-	RevisionLabel  string `json:"revisionLabel"`
-	Color          string `json:"color"`
-	Message        string `json:"message"`
-	StartedAt      string `json:"startedAt"`
-	UptimeSeconds  int64  `json:"uptimeSeconds"`
-	RequestsServed int64  `json:"requestsServed"`
-	ColdStart      bool   `json:"coldStart"`
-	GOOS           string `json:"goos"`
-	GOARCH         string `json:"goarch"`
-	GoVersion      string `json:"goVersion"`
-	NumCPU         int    `json:"numCPU"`
-	Port           string `json:"port"`
+	Hostname       string      `json:"hostname"`
+	InstanceID     string      `json:"instanceId"`
+	Version        string      `json:"version"`
+	RevisionLabel  string      `json:"revisionLabel"`
+	Color          string      `json:"color"`
+	Message        string      `json:"message"`
+	StartedAt      string      `json:"startedAt"`
+	UptimeSeconds  int64       `json:"uptimeSeconds"`
+	RequestsServed int64       `json:"requestsServed"`
+	ColdStart      bool        `json:"coldStart"`
+	GOOS           string      `json:"goos"`
+	GOARCH         string      `json:"goarch"`
+	GoVersion      string      `json:"goVersion"`
+	NumCPU         int         `json:"numCPU"`
+	Port           string      `json:"port"`
+	Startup        StartupInfo `json:"startup"`
 }
 
 func (a *App) handleInfo(w http.ResponseWriter, r *http.Request) {
@@ -175,6 +178,7 @@ func (a *App) handleInfo(w http.ResponseWriter, r *http.Request) {
 		GoVersion:      runtime.Version(),
 		NumCPU:         runtime.NumCPU(),
 		Port:           a.cfg.Port,
+		Startup:        a.startupInfo(),
 	})
 }
 

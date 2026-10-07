@@ -3,6 +3,7 @@ package app
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"time"
@@ -14,12 +15,24 @@ type statusWriter struct {
 	http.ResponseWriter
 	status int
 	wrote  bool
+	start  time.Time
+}
+
+// serverTiming tells the browser how long the application itself took before
+// the first byte, so a page can split its waiting time into app time and
+// platform plus network time (Server-Timing, readable from JavaScript).
+func (w *statusWriter) serverTiming() {
+	if !w.start.IsZero() {
+		w.Header().Set("Server-Timing", fmt.Sprintf("app;desc=\"application\";dur=%.2f", float64(time.Since(w.start).Microseconds())/1000.0))
+		w.Header().Set("Timing-Allow-Origin", "*")
+	}
 }
 
 func (w *statusWriter) WriteHeader(code int) {
 	if !w.wrote {
 		w.status = code
 		w.wrote = true
+		w.serverTiming()
 	}
 	w.ResponseWriter.WriteHeader(code)
 }
@@ -28,6 +41,7 @@ func (w *statusWriter) Write(b []byte) (int, error) {
 	if !w.wrote {
 		w.status = http.StatusOK
 		w.wrote = true
+		w.serverTiming()
 	}
 	return w.ResponseWriter.Write(b)
 }
@@ -54,13 +68,14 @@ func (a *App) instrument(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		a.inst.countRequest()
+		a.markRequest(start)
 
 		h := w.Header()
 		h.Set("X-Instance-Id", a.inst.ID)
 		h.Set("X-Revision-Label", a.cfg.RevisionLabel)
 		h.Set("X-Served-By", "podinfo-sls/"+a.cfg.Version)
 
-		sw := &statusWriter{ResponseWriter: w, status: http.StatusOK}
+		sw := &statusWriter{ResponseWriter: w, status: http.StatusOK, start: start}
 		next.ServeHTTP(sw, r)
 
 		logFn := a.log.Info

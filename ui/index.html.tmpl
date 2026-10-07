@@ -60,6 +60,36 @@
       </article>
     </section>
 
+    <section class="cards">
+      <article class="card" id="timing" data-cold="{{if .ColdStart}}1{{else}}0{{end}}">
+        <h2>Response time <span class="hint">measured by your browser</span></h2>
+        <p class="headline" id="t-headline">measuring...</p>
+        <dl>
+          <dt>waiting for first byte</dt><dd><span class="big-num" id="t-ttfb">-</span></dd>
+          <dt>of which application</dt><dd class="mono" id="t-app">-</dd>
+          <dt>of which platform + network</dt><dd class="mono" id="t-platform">-</dd>
+          <dt>DNS + TLS connection</dt><dd class="mono" id="t-connect">-</dd>
+        </dl>
+        <div class="measure">
+          <button id="t-run" class="btn" type="button">Measure 5 calls</button>
+          <ol id="t-list" class="mono"></ol>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>Instance startup <span class="hint">measured by the instance</span></h2>
+        <ol class="timeline">
+          <li><span class="step">VM boot to process start</span>
+            <span class="val">{{if .Startup.DedicatedKernel}}{{with .Startup.KernelBootToProcessMs}}{{.}} ms{{end}}{{else}}<span class="muted">shared kernel, not measurable</span>{{end}}</span></li>
+          <li><span class="step">process start to ready</span>
+            <span class="val">{{with .Startup.ProcessToReadyMs}}{{.}} ms{{else}}-{{end}}</span></li>
+          <li><span class="step">ready to first request</span>
+            <span class="val">{{with .Startup.ReadyToFirstRequestMs}}{{.}} ms{{else}}-{{end}}</span></li>
+        </ol>
+        <p class="note">A cold start is everything the first visitor waits for: the platform wakes an instance, the instance boots and starts this process, then the request is served. The first line exists only when the instance runs its own kernel (micro-VM).</p>
+      </article>
+    </section>
+
     <section class="card endpoints">
       <h2>Endpoints</h2>
       <ul class="mono">
@@ -91,6 +121,51 @@
           url.searchParams.set('refresh', '1');
         }
         window.location.replace(url.toString());
+      });
+    })();
+  </script>
+  <script>
+    (function () {
+      function fmt(v) { return v == null ? '-' : (v < 10 ? v.toFixed(1) : Math.round(v)) + ' ms'; }
+      function appDur(entry) {
+        var st = (entry && entry.serverTiming) || [];
+        for (var i = 0; i < st.length; i++) if (st[i].name === 'app') return st[i].duration;
+        return null;
+      }
+      var cold = document.getElementById('timing').dataset.cold === '1';
+      function showNav() {
+        var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+        if (!nav || !nav.responseStart) { document.getElementById('t-headline').textContent = 'not available in this browser'; return; }
+        var ttfb = nav.responseStart - nav.requestStart;
+        var app = appDur(nav);
+        var connect = nav.connectEnd > 0 ? nav.connectEnd - nav.domainLookupStart : null;
+        document.getElementById('t-ttfb').textContent = fmt(ttfb);
+        document.getElementById('t-app').textContent = fmt(app);
+        document.getElementById('t-platform').textContent = app == null ? '-' : fmt(Math.max(0, ttfb - app));
+        document.getElementById('t-connect').textContent = connect && connect > 0 ? fmt(connect) : 'reused';
+        document.getElementById('t-headline').innerHTML = cold
+          ? '<span class="cold-tag">cold start</span> this page woke the instance: you waited <strong>' + fmt(ttfb) + '</strong>'
+          : 'warm instance: you waited <strong>' + fmt(ttfb) + '</strong>';
+      }
+      if (document.readyState === 'complete') showNav(); else window.addEventListener('load', function () { setTimeout(showNav, 0); });
+
+      var run = document.getElementById('t-run'), list = document.getElementById('t-list');
+      run.addEventListener('click', function () {
+        run.disabled = true; list.innerHTML = '';
+        var i = 0;
+        (function next() {
+          if (i >= 5) { run.disabled = false; return; }
+          var url = '/api/info?probe=' + Date.now() + '-' + i, t0 = performance.now();
+          fetch(url, { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
+            var total = performance.now() - t0;
+            var e = performance.getEntriesByName(new URL(url, location.href).href)[0];
+            var li = document.createElement('li');
+            li.textContent = fmt(total) + '  (app ' + fmt(appDur(e)) + ', instance ' + j.instanceId + (j.coldStart ? ', cold start' : '') + ')';
+            list.appendChild(li);
+          }).catch(function () {
+            var li = document.createElement('li'); li.textContent = 'error'; list.appendChild(li);
+          }).then(function () { i++; next(); });
+        })();
       });
     })();
   </script>

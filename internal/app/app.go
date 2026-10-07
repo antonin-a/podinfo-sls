@@ -25,6 +25,8 @@ type App struct {
 
 	events *eventRing
 
+	clock startupClock
+
 	memMu   sync.Mutex
 	memHeld [][]byte
 }

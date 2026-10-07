@@ -11,6 +11,7 @@ import (
 	"flag"
 	"io/fs"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -57,9 +58,16 @@ func main() {
 		// No WriteTimeout on purpose: /delay and /stream are long-lived by design.
 	}
 
+	ln, err := net.Listen("tcp", srv.Addr)
+	if err != nil {
+		logger.Error("cannot listen", "addr", srv.Addr, "error", err)
+		os.Exit(1)
+	}
+	a.MarkReady()
+
 	errCh := make(chan error, 1)
 	go func() {
-		errCh <- srv.ListenAndServe()
+		errCh <- srv.Serve(ln)
 	}()
 
 	logger.Info("instance started",

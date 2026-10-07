@@ -23,13 +23,13 @@ type Instance struct {
 
 func newInstance() *Instance {
 	host, err := os.Hostname()
-	if err != nil || host == "" {
-		host = "unknown"
+	if err != nil || host == "" || host == "(none)" {
+		host = "not set by the platform"
 	}
 	return &Instance{
 		Hostname:  host,
 		ID:        randomID(8),
-		StartedAt: time.Now(),
+		StartedAt: processStart,
 	}
 }
 

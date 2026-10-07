@@ -180,3 +180,17 @@ dd.big { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
   dl { grid-template-columns: 1fr; row-gap: 2px; }
   dt { margin-top: 8px; }
 }
+
+/* Response time and startup cards */
+.hint { font-size: 0.7rem; font-weight: 400; color: var(--muted); text-transform: none; letter-spacing: 0; margin-left: 6px; }
+.headline { margin: 0 0 12px; font-size: 1.05rem; }
+.cold-tag { display: inline-block; background: #FFE8A3; color: #5A4300; border-radius: 6px; padding: 1px 8px; font-size: 0.8rem; font-weight: 700; margin-right: 6px; }
+.big-num { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+.measure { margin-top: 14px; }
+.measure ol { margin: 10px 0 0; padding-left: 22px; font-size: 0.85rem; }
+.timeline { list-style: none; margin: 0; padding: 0; }
+.timeline li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px dashed #D5DBEA; }
+.timeline .step { color: var(--muted); font-size: 0.9rem; }
+.timeline .val { font-weight: 700; white-space: nowrap; }
+.note { font-size: 0.8rem; color: var(--muted); margin: 12px 0 0; line-height: 1.4; }
+.muted { color: var(--muted); }
