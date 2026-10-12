@@ -68,6 +68,11 @@ func (a *App) Handler() http.Handler {
 
 	mux.HandleFunc("GET /{$}", a.handleIndex)
 	mux.HandleFunc("GET /style.css", a.handleStyle)
+	// Browsers ask for these on their own: answer them so they never show up
+	// as 404s in the platform error rate.
+	mux.HandleFunc("GET /favicon.ico", a.handleFavicon)
+	mux.HandleFunc("GET /favicon.svg", a.handleFavicon)
+	mux.HandleFunc("GET /robots.txt", a.handleRobots)
 
 	mux.HandleFunc("GET /api/info", a.handleInfo)
 	mux.HandleFunc("GET /api/env", a.handleEnv)
