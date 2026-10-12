@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   {{if .Refresh}}<meta http-equiv="refresh" content="2">{{end}}
   <title>podinfo-sls {{.RevisionLabel}}</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/style.css">
   <style>
     :root { --band: {{.Color}}; --band-text: {{.TextColor}}; }
@@ -95,7 +96,7 @@
           <li><span class="step">ready to first request</span>
             <span class="val">{{with .Startup.ReadyToFirstRequestMs}}{{.}} ms{{else}}-{{end}}</span></li>
           {{end}}
-          <li class="total"><span class="step">cold start seen from inside the instance</span>
+          <li class="total"><span class="step">{{if .Startup.StartedAheadOfTraffic}}instance startup time (nobody was waiting){{else}}cold start seen from inside the instance{{end}}</span>
             <span class="val">{{with .Startup.InstanceColdStartMs}}{{.}} ms{{else}}-{{end}}</span></li>
         </ol>
         <p class="note">{{if .Startup.StartedAheadOfTraffic}}This instance was started before any request was waiting (at deploy, or to keep capacity): the wait for the first visitor is idle time, not part of a cold start. {{end}}The platform's own figure, from wake to the application answering, is the cold start in the Metrics tab of the console (Serverless API metrics). The first line exists only when the instance runs its own kernel (micro-VM).</p>
